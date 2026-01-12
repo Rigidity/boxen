@@ -16,6 +16,23 @@
         <input class="button" type="button" id="new-game" value="New Game" />
       </div>
       <canvas id="canvas"></canvas>
+      <div class="instructions">
+        When it's your turn, place a ring on the board adjacent to other objects
+        with your color (or anywhere, if you haven't placed anything yet). When
+        you've placed 3 rings in a row, you must combine them into a tower. And
+        likewise, 3 towers make a laser.
+      </div>
+
+      <div class="instructions">
+        Towers will prevent the enemy from having objects adjacent to them in
+        any direction (including diagonally). Lasers protect an entire row and
+        column, making them very powerful at boxing your opponent in.
+      </div>
+
+      <div class="instructions">
+        The goal of the game is to prevent your opponent from being able to
+        place any objects on the board.
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

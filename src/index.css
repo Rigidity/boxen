@@ -37,3 +37,10 @@ html {
   margin-top: 0px;
   margin-bottom: 10px;
 }
+
+.instructions {
+  margin-top: 20px;
+  font-size: 1em;
+  line-height: 1.2;
+  width: 450px;
+}
