@@ -30,7 +30,7 @@ const OUTLINE_WIDTH = 2;
 const BUFFER_WIDTH = 6;
 const RING_WIDTH = 6;
 const TOWER_RADIUS = 2;
-const LASER_WIDTH = 16;
+const LASER_WIDTH = 8;
 
 const canvas = document.querySelector<HTMLCanvasElement>("#canvas")!;
 canvas.width = BOARD_SIZE * CELL_SIZE;
@@ -231,6 +231,19 @@ function drawLaser(x: number, y: number, color: Color) {
     LASER_WIDTH,
     canvas.height
   );
+
+  ctx.lineWidth = RING_WIDTH;
+  ctx.strokeStyle = getColorString(color, false);
+  ctx.beginPath();
+  ctx.arc(
+    x + CELL_SIZE / 2,
+    y + CELL_SIZE / 2,
+    CELL_SIZE / 2 - ctx.lineWidth / 2 - BUFFER_WIDTH,
+    0,
+    2 * Math.PI
+  );
+  ctx.stroke();
+  ctx.closePath();
 }
 
 function getColorString(color: Color, partiallyTransparent: boolean) {
