@@ -1,4 +1,4 @@
-export const BOARD_SIZE = 10;
+export const BOARD_SIZE = 8;
 export const COMBINE_COUNT = 3;
 
 export class Game {
