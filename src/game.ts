@@ -42,6 +42,18 @@ export class Game {
     return !this.canWeMove || !this.canEnemyMove;
   }
 
+  public getInvalidityHint(x: number, y: number) {
+    if (!isValidCell(this.board, x, y, this.ourColor)) {
+      return this.enemyColor;
+    }
+
+    if (!isValidCell(this.board, x, y, this.enemyColor)) {
+      return this.ourColor;
+    }
+
+    return null;
+  }
+
   public getCell(x: number, y: number) {
     return getCell(this.board, x, y);
   }

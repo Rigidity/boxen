@@ -30,7 +30,7 @@ const OUTLINE_WIDTH = 2;
 const BUFFER_WIDTH = 6;
 const RING_WIDTH = 6;
 const TOWER_RADIUS = 2;
-const LASER_WIDTH = 8;
+const LASER_WIDTH = 2;
 
 const canvas = document.querySelector<HTMLCanvasElement>("#canvas")!;
 canvas.width = BOARD_SIZE * CELL_SIZE;
@@ -99,6 +99,20 @@ function renderGame() {
           }
 
           drawCell(x, y, cell);
+
+          if (cell === Cell.Empty) {
+            const hint = game.getInvalidityHint(i, j);
+
+            if (hint !== null) {
+              if (hint === myColor) {
+                // Show a subtle dot for squares controlled by your color
+                drawControlHint(x, y, hint);
+              } else {
+                // Show an X for squares controlled by the opponent (blocked)
+                drawInvalidityHint(x, y, hint);
+              }
+            }
+          }
         }
       }
     }
@@ -171,6 +185,30 @@ function drawHighlightedCell(x: number, y: number, valid: boolean) {
     CELL_SIZE - ctx.lineWidth,
     CELL_SIZE - ctx.lineWidth
   );
+}
+
+function drawInvalidityHint(x: number, y: number, color: Color) {
+  ctx.strokeStyle = getColorString(color, true);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  const padding = CELL_SIZE / 3;
+  // Draw diagonal line from top-left to bottom-right
+  ctx.moveTo(x + padding, y + padding);
+  ctx.lineTo(x + CELL_SIZE - padding, y + CELL_SIZE - padding);
+  // Draw diagonal line from top-right to bottom-left
+  ctx.moveTo(x + CELL_SIZE - padding, y + padding);
+  ctx.lineTo(x + padding, y + CELL_SIZE - padding);
+  ctx.stroke();
+  ctx.closePath();
+}
+
+function drawControlHint(x: number, y: number, color: Color) {
+  ctx.fillStyle = getColorString(color, true);
+  ctx.beginPath();
+  const dotRadius = 6;
+  ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, dotRadius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.closePath();
 }
 
 function drawCell(
