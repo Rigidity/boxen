@@ -233,7 +233,7 @@ function drawLaser(x: number, y: number, color: Color) {
   );
 
   ctx.lineWidth = RING_WIDTH;
-  ctx.strokeStyle = getColorString(color, false);
+  ctx.fillStyle = getColorString(color, false);
   ctx.beginPath();
   ctx.arc(
     x + CELL_SIZE / 2,
@@ -242,7 +242,7 @@ function drawLaser(x: number, y: number, color: Color) {
     0,
     2 * Math.PI
   );
-  ctx.stroke();
+  ctx.fill();
   ctx.closePath();
 }
 
