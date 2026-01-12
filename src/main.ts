@@ -105,10 +105,8 @@ function renderGame() {
 
             if (hint !== null) {
               if (hint === myColor) {
-                // Show a subtle dot for squares controlled by your color
                 drawControlHint(x, y, hint);
               } else {
-                // Show an X for squares controlled by the opponent (blocked)
                 drawInvalidityHint(x, y, hint);
               }
             }
@@ -207,10 +205,8 @@ function drawInvalidityHint(x: number, y: number, color: Color) {
   ctx.lineWidth = 4;
   ctx.beginPath();
   const padding = CELL_SIZE / 3;
-  // Draw diagonal line from top-left to bottom-right
   ctx.moveTo(x + padding, y + padding);
   ctx.lineTo(x + CELL_SIZE - padding, y + CELL_SIZE - padding);
-  // Draw diagonal line from top-right to bottom-left
   ctx.moveTo(x + CELL_SIZE - padding, y + padding);
   ctx.lineTo(x + padding, y + CELL_SIZE - padding);
   ctx.stroke();
