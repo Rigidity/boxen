@@ -1,0 +1,39 @@
+body,
+html {
+  background-color: #222;
+  color: #eee;
+}
+
+#container {
+  font: 16px/1.5 "Helvetica Neue", Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#controls {
+  margin-bottom: 20px;
+}
+
+.button {
+  width: 140px;
+  height: 40px;
+  border: none;
+  border-radius: 5px;
+  background-color: #444;
+  color: #eee;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 4em;
+  margin-top: 10px;
+  margin-bottom: 0px;
+}
+
+#turn {
+  font-size: 2em;
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
