@@ -112,7 +112,7 @@ function renderGame() {
         if (cell === null || getCellType(cell) !== CellType.Laser) continue;
 
         const color = getCellColor(cell);
-        if (!color) continue;
+        if (color === null) continue;
 
         drawLaser(i * CELL_SIZE, j * CELL_SIZE, color);
       }
