@@ -66,7 +66,7 @@ function renderGame() {
         const x = i * CELL_SIZE;
         const y = j * CELL_SIZE;
 
-        if (!upgradePositions.length) {
+        if (!upgradePositions.length && !isTouchDevice()) {
           if (
             mousePosition.x >= x &&
             mousePosition.x < x + CELL_SIZE &&
@@ -138,16 +138,18 @@ function renderGame() {
 
 window.addEventListener("mousemove", (event) => {
   const rect = canvas.getBoundingClientRect();
-  mousePosition.x = event.clientX - rect.left;
-  mousePosition.y = event.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  mousePosition.x = (event.clientX - rect.left) * scaleX;
+  mousePosition.y = (event.clientY - rect.top) * scaleY;
 });
 
-window.addEventListener("click", (event) => {
-  if (event.button !== 0) return;
-
+function handleClick(clientX: number, clientY: number) {
   const rect = canvas.getBoundingClientRect();
-  mousePosition.x = event.clientX - rect.left;
-  mousePosition.y = event.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  mousePosition.x = (clientX - rect.left) * scaleX;
+  mousePosition.y = (clientY - rect.top) * scaleY;
 
   const x = Math.floor(mousePosition.x / CELL_SIZE);
   const y = Math.floor(mousePosition.y / CELL_SIZE);
@@ -168,6 +170,19 @@ window.addEventListener("click", (event) => {
         }
       }
     }
+  }
+}
+
+window.addEventListener("click", (event) => {
+  if (event.button !== 0) return;
+  handleClick(event.clientX, event.clientY);
+});
+
+canvas.addEventListener("touchstart", (event) => {
+  event.preventDefault();
+  if (event.touches.length === 1) {
+    const touch = event.touches[0];
+    handleClick(touch.clientX, touch.clientY);
   }
 });
 
@@ -343,3 +358,7 @@ setInterval(() => {
 
   updateGame();
 }, 1000);
+
+function isTouchDevice() {
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
