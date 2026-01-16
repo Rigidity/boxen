@@ -25,7 +25,7 @@ if (urlParams.get("uuid") !== uuid) {
 const myColor = localStorage.getItem(uuid) === "red" ? Color.Red : Color.Black;
 localStorage.setItem(uuid, myColor === Color.Red ? "red" : "black");
 
-const CELL_SIZE = 10;
+const CELL_SIZE = 56;
 const OUTLINE_WIDTH = 2;
 const BUFFER_WIDTH = 6;
 const RING_WIDTH = 6;
