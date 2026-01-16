@@ -18,8 +18,8 @@ export class Game {
     this.ourColor = color;
     this.enemyColor = oppositeColor(color);
 
-    this.board.cells[0][BOARD_SIZE - 1] = Cell.RedRing;
-    this.board.cells[BOARD_SIZE - 1][0] = Cell.BlackRing;
+    // this.board.cells[0][BOARD_SIZE - 1] = Cell.RedRing;
+    // this.board.cells[BOARD_SIZE - 1][0] = Cell.BlackRing;
   }
 
   public getOurColor() {
