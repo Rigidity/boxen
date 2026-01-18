@@ -190,39 +190,37 @@ function renderGame(
 
       const cell = getCellAt(board, position);
 
-      if (cell !== null) {
-        for (const upgradePosition of upgradePositions) {
-          if (upgradePosition.x === i && upgradePosition.y === j) {
-            drawHighlightedCell(ctx, drawX, drawY, true);
-            break;
-          }
+      for (const upgradePosition of upgradePositions) {
+        if (upgradePosition.x === i && upgradePosition.y === j) {
+          drawHighlightedCell(ctx, drawX, drawY, true);
+          break;
+        }
+      }
+
+      drawCell(ctx, drawX, drawY, cell);
+
+      if (cell === Cell.Empty) {
+        let hint = null;
+
+        if (!canOccupyCell(board, position, myColor)) {
+          hint = myColor === Color.Red ? Color.Black : Color.Red;
         }
 
-        drawCell(ctx, drawX, drawY, cell);
+        if (
+          !canOccupyCell(
+            board,
+            position,
+            myColor === Color.Red ? Color.Black : Color.Red,
+          )
+        ) {
+          hint = myColor;
+        }
 
-        if (cell === Cell.Empty) {
-          let hint = null;
-
-          if (!canOccupyCell(board, position, myColor)) {
-            hint = myColor === Color.Red ? Color.Black : Color.Red;
-          }
-
-          if (
-            !canOccupyCell(
-              board,
-              position,
-              myColor === Color.Red ? Color.Black : Color.Red,
-            )
-          ) {
-            hint = myColor;
-          }
-
-          if (hint !== null) {
-            if (hint === myColor) {
-              drawControlHint(ctx, drawX, drawY, hint);
-            } else {
-              drawInvalidityHint(ctx, drawX, drawY, hint);
-            }
+        if (hint !== null) {
+          if (hint === myColor) {
+            drawControlHint(ctx, drawX, drawY, hint);
+          } else {
+            drawInvalidityHint(ctx, drawX, drawY, hint);
           }
         }
       }
@@ -308,12 +306,15 @@ function drawCell(
   const type = getCellType(cell);
   const color = getCellColor(cell);
 
-  if (color === null) return;
-
   switch (type) {
     case CellType.Empty:
       break;
+    case CellType.Ruins:
+      ctx.fillStyle = "#707070";
+      ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+      break;
     case CellType.Ring:
+      if (color === null) return;
       ctx.lineWidth = RING_WIDTH;
       ctx.strokeStyle = getColorString(color, partiallyTransparent);
       ctx.beginPath();
@@ -328,6 +329,7 @@ function drawCell(
       ctx.closePath();
       break;
     case CellType.Tower:
+      if (color === null) return;
       ctx.fillStyle = getColorString(color, partiallyTransparent);
       ctx.beginPath();
       ctx.roundRect(

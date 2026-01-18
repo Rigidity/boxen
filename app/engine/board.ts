@@ -33,10 +33,25 @@ export function createBoard(settings: BoardSettings) {
     () => Cell.Empty,
   );
 
-  return {
+  const board: Board = {
     settings,
     cells,
   };
+
+  if (settings.fixedStart) {
+    setCellAt(
+      board,
+      { x: 0, y: settings.size - 1 },
+      getCellOf(CellType.Ring, Color.Red),
+    );
+    setCellAt(
+      board,
+      { x: settings.size - 1, y: 0 },
+      getCellOf(CellType.Ring, Color.Black),
+    );
+  }
+
+  return board;
 }
 
 export function getCellAt(board: Board, position: Position) {
@@ -67,8 +82,15 @@ export function setCellAt(board: Board, position: Position, cell: Cell) {
       for (const adjacentPosition of getAdjacentPositions(position)) {
         const adjacentCell = getCellAt(board, adjacentPosition);
 
-        if (getCellColor(adjacentCell) !== color) {
-          setCellAt(board, adjacentPosition, Cell.Empty);
+        if (
+          adjacentCell !== Cell.Empty &&
+          getCellColor(adjacentCell) !== color
+        ) {
+          setCellAt(
+            board,
+            adjacentPosition,
+            board.settings.ruins ? Cell.Ruins : Cell.Empty,
+          );
         }
       }
       break;
@@ -83,8 +105,15 @@ export function setCellAt(board: Board, position: Position, cell: Cell) {
         for (const affectedPosition of affectedPositions) {
           const affectedCell = getCellAt(board, affectedPosition);
 
-          if (getCellColor(affectedCell) !== color) {
-            setCellAt(board, affectedPosition, Cell.Empty);
+          if (
+            affectedCell !== Cell.Empty &&
+            getCellColor(affectedCell) !== color
+          ) {
+            setCellAt(
+              board,
+              affectedPosition,
+              board.settings.ruins ? Cell.Ruins : Cell.Empty,
+            );
           }
         }
       }

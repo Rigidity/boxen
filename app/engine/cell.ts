@@ -1,5 +1,6 @@
 export const enum Cell {
   Empty,
+  Ruins,
   RedRing,
   RedTower,
   RedLaser,
@@ -10,6 +11,7 @@ export const enum Cell {
 
 export const enum CellType {
   Empty = "empty",
+  Ruins = "ruins",
   Ring = "ring",
   Tower = "tower",
   Laser = "laser",
@@ -24,6 +26,8 @@ export function getCellType(cell: Cell) {
   switch (cell) {
     case Cell.Empty:
       return CellType.Empty;
+    case Cell.Ruins:
+      return CellType.Ruins;
     case Cell.RedRing:
       return CellType.Ring;
     case Cell.RedTower:
@@ -44,6 +48,8 @@ export function getCellType(cell: Cell) {
 export function getCellColor(cell: Cell) {
   switch (cell) {
     case Cell.Empty:
+      return null;
+    case Cell.Ruins:
       return null;
     case Cell.RedRing:
       return Color.Red;
@@ -72,6 +78,8 @@ export function getCellOf(cellType: CellType, cellColor: Color) {
       return cellColor === Color.Red ? Cell.RedLaser : Cell.BlackLaser;
     case CellType.Empty:
       return Cell.Empty;
+    case CellType.Ruins:
+      return Cell.Ruins;
     default:
       throw new Error("Invalid cell type");
   }
