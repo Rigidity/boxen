@@ -265,32 +265,119 @@ export function GameManager() {
     setMyColor(Color.Red);
   };
 
+  let winner: Color | null = null;
+
+  if (board) {
+    let canWeMove = false;
+    let canTheyMove = false;
+
+    for (let i = 0; i < board.settings.size; i++) {
+      for (let j = 0; j < board.settings.size; j++) {
+        const position = { x: i, y: j };
+
+        if (
+          canPlaceRing(board, position, myColor) ||
+          (!board.settings.autoUpgrade &&
+            getCellColor(getCellAt(board, position)) === myColor &&
+            getUpgradePositions(board, position).length > 0)
+        ) {
+          canWeMove = true;
+        }
+
+        if (
+          canPlaceRing(
+            board,
+            position,
+            myColor === Color.Red ? Color.Black : Color.Red,
+          ) ||
+          (!board.settings.autoUpgrade &&
+            getCellColor(getCellAt(board, position)) ===
+              (myColor === Color.Red ? Color.Black : Color.Red) &&
+            getUpgradePositions(board, position).length > 0)
+        ) {
+          canTheyMove = true;
+        }
+      }
+    }
+
+    if (canWeMove && !canTheyMove) {
+      winner = myColor;
+    } else if (!canWeMove && canTheyMove) {
+      winner = myColor === Color.Red ? Color.Black : Color.Red;
+    }
+  }
+
   return (
-    <div>
-      <div className="flex gap-2">
+    <div className="flex flex-col items-center gap-4">
+      {board && isPlaying && (
+        <div
+          className={`w-full border rounded-lg p-5 ${
+            activeColor === myColor && winner === null
+              ? "bg-green-50 dark:bg-green-950/30 border-green-600 dark:border-green-700"
+              : "bg-card border-border"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-4 h-4 rounded-full ${
+                  myColor === Color.Red ? "bg-red-600" : "bg-black"
+                }`}
+              />
+              <span className="text-base font-semibold">
+                Playing as {myColor === Color.Red ? "Red" : "Black"}
+              </span>
+            </div>
+            <div className="text-base font-semibold">
+              {winner ? (
+                winner === myColor ? (
+                  <span className="text-green-700 dark:text-green-400">
+                    You win!
+                  </span>
+                ) : (
+                  <span className="text-red-700 dark:text-red-400">
+                    You lose!
+                  </span>
+                )
+              ) : activeColor === myColor ? (
+                <span className="text-green-700 dark:text-green-400">
+                  Your turn
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Opponent's turn</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="flex gap-2 w-full">
         {board && isPlaying ? (
           <>
             <Button
-              className="cursor-pointer"
+              className="cursor-pointer flex-1"
+              variant="outline"
               onClick={() => setResetOpen(true)}
             >
               Reset Game
             </Button>
             <Button
-              className="cursor-pointer"
+              className="cursor-pointer flex-1"
+              variant="outline"
               onClick={() => setLeaveOpen(true)}
             >
               Leave Game
             </Button>
           </>
         ) : (
-          <Button className="cursor-pointer" onClick={() => setStartOpen(true)}>
+          <Button
+            className="cursor-pointer w-full"
+            onClick={() => setStartOpen(true)}
+          >
             New Game
           </Button>
         )}
       </div>
-
-      {board && (
+      {board ? (
         <GameCanvas
           board={board}
           myColor={myColor}
@@ -298,8 +385,13 @@ export function GameManager() {
           upgradePositions={upgradePositions}
           onCellClick={onCellClick}
         />
+      ) : (
+        <div className="w-full bg-card border border-dashed rounded flex items-center justify-center">
+          <p className="text-muted-foreground text-sm p-4">
+            Start a new game or join an existing one
+          </p>
+        </div>
       )}
-
       <Dialog open={startOpen} onOpenChange={setStartOpen}>
         <DialogContent>
           <DialogHeader>
@@ -432,7 +524,6 @@ export function GameManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent>
           <DialogHeader>
@@ -449,7 +540,6 @@ export function GameManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
         <DialogContent>
           <DialogHeader>

@@ -12,12 +12,12 @@ import {
 } from "../engine/cell";
 import { Position } from "../engine/position";
 
-const CELL_SIZE = 56;
+const CELL_SIZE = 128;
 const OUTLINE_WIDTH = 2;
-const BUFFER_WIDTH = 6;
-const RING_WIDTH = 6;
-const TOWER_RADIUS = 2;
-const LASER_WIDTH = 2;
+const BUFFER_WIDTH = 16;
+const RING_WIDTH = 12;
+const TOWER_RADIUS = 6;
+const LASER_WIDTH = 4;
 
 export interface GameCanvasProps {
   board: Board;
@@ -127,7 +127,7 @@ export function GameCanvas({
   return (
     <canvas
       ref={canvasRef}
-      className="max-w-full"
+      className="w-full border"
       width={board.settings.size * CELL_SIZE}
       height={board.settings.size * CELL_SIZE}
       onClick={onClick}
@@ -272,7 +272,7 @@ function drawInvalidityHint(
   color: Color,
 ) {
   ctx.strokeStyle = getColorString(color, true);
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 8;
   ctx.beginPath();
   const padding = CELL_SIZE / 3;
   ctx.moveTo(x + padding, y + padding);
@@ -291,7 +291,7 @@ function drawControlHint(
 ) {
   ctx.fillStyle = getColorString(color, true);
   ctx.beginPath();
-  const dotRadius = 6;
+  const dotRadius = 10;
   ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, dotRadius, 0, 2 * Math.PI);
   ctx.fill();
   ctx.closePath();
