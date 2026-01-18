@@ -20,7 +20,16 @@ import {
   startGame,
   updateGame,
 } from "../api";
-import { Color, Game, Position } from "../engine/game";
+import {
+  Board,
+  canPlaceRing,
+  getUpgradePositions,
+  placeRing,
+  upgrade,
+} from "../engine/board";
+import { Color } from "../engine/cell";
+import { Position } from "../engine/position";
+import { DEFAULT_SETTINGS } from "../engine/settings";
 import { GameCanvas } from "./GameCanvas";
 
 export function GameManager() {
@@ -28,7 +37,8 @@ export function GameManager() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [game, setGame] = useState<Game | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [originPosition, setOriginPosition] = useState<Position | null>(null);
   const [upgradePositions, setUpgradePositions] = useState<Position[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeColor, setActiveColor] = useState(Color.Red);
@@ -42,12 +52,12 @@ export function GameManager() {
   const uuid = useMemo(() => searchParams.get("uuid"), [searchParams]);
 
   const loadGame = (
-    newGame: Game,
+    newBoard: Board,
     newActiveColor: Color,
     newMyColor: Color,
     newIsPlaying: boolean,
   ) => {
-    setGame(newGame);
+    setBoard(newBoard);
     setActiveColor(newActiveColor);
     setMyColor(newMyColor);
     setUpgradePositions([]);
@@ -73,10 +83,8 @@ export function GameManager() {
           router.push(`${pathname}?${params.toString()}`);
         } else {
           const newActiveColor = response.yourColor ?? Color.Red;
-          const newGame = new Game(newActiveColor);
-          newGame.setBoard(response.board);
           loadGame(
-            newGame,
+            response.board,
             response.activeColor,
             newActiveColor,
             response.yourColor !== null,
@@ -85,7 +93,7 @@ export function GameManager() {
       });
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGame(null);
+      setBoard(null);
     }
   }, [uuid, participantId, pathname, router, searchParams]);
 
@@ -98,43 +106,59 @@ export function GameManager() {
 
       if ("error" in response) {
         console.error(response.error);
-      } else if (game) {
+      } else if (board) {
         setActiveColor(response.activeColor);
         setMyColor(response.yourColor ?? Color.Red);
-        game.setBoard(response.board);
+        setBoard(response.board);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [uuid, activeColor, myColor, isPlaying, game, participantId]);
+  }, [uuid, activeColor, myColor, isPlaying, board, participantId]);
 
   const passTurn = async () => {
-    if (!participantId || !isPlaying || !uuid || !game) return;
+    if (!participantId || !isPlaying || !uuid || !board) return;
 
-    const response = await updateGame(participantId, uuid, game.getBoard());
+    const response = await updateGame(participantId, uuid, board);
 
     if ("error" in response) {
       console.error(response.error);
     } else {
       setActiveColor(response.activeColor);
+      setOriginPosition(null);
+      setUpgradePositions([]);
     }
   };
 
   const onCellClick = (x: number, y: number) => {
-    if (!game || !isPlaying) return;
+    if (!board || !isPlaying) return;
 
     if (upgradePositions.length === 0) {
-      if (game.canPlaceRing(x, y)) {
-        const newUpgradePositions = game.placeRing(x, y);
-        if (!newUpgradePositions.length) passTurn();
-        setUpgradePositions(newUpgradePositions);
+      if (canPlaceRing(board, { x, y }, myColor)) {
+        placeRing(board, { x, y }, myColor);
+        const newUpgradePositions = getUpgradePositions(board, { x, y });
+        if (!newUpgradePositions.length) {
+          passTurn();
+        } else {
+          setUpgradePositions(newUpgradePositions);
+          setOriginPosition({ x, y });
+        }
       }
     } else {
       for (const upgradePosition of upgradePositions) {
-        if (upgradePosition.x === x && upgradePosition.y === y) {
-          const newUpgradePositions = game.upgrade({ x, y });
-          if (!newUpgradePositions.length) passTurn();
-          setUpgradePositions(newUpgradePositions);
+        if (
+          upgradePosition.x === x &&
+          upgradePosition.y === y &&
+          originPosition
+        ) {
+          upgrade(board, originPosition, { x, y });
+          const newUpgradePositions = getUpgradePositions(board, { x, y });
+          if (!newUpgradePositions.length) {
+            passTurn();
+          } else {
+            setUpgradePositions(newUpgradePositions);
+            setOriginPosition({ x, y });
+          }
           break;
         }
       }
@@ -144,15 +168,17 @@ export function GameManager() {
   const newGame = async () => {
     if (!participantId) return;
 
-    const response = await startGame(participantId);
+    const response = await startGame(
+      participantId,
+      DEFAULT_SETTINGS,
+      Color.Red,
+    );
 
     const params = new URLSearchParams(searchParams.toString());
     params.set("uuid", response.uuid);
     router.push(`${pathname}?${params.toString()}`);
 
-    const newGame = new Game(Color.Red);
-    newGame.setBoard(response.board);
-    loadGame(newGame, response.activeColor, Color.Red, true);
+    loadGame(response.board, response.activeColor, Color.Red, true);
   };
 
   const resetGame = async () => {
@@ -165,16 +191,14 @@ export function GameManager() {
     if ("error" in response) {
       console.error(response.error);
     } else {
-      const newGame = new Game(Color.Red);
-      newGame.setBoard(response.board);
-      loadGame(newGame, response.activeColor, response.yourColor, true);
+      loadGame(response.board, response.activeColor, response.yourColor, true);
     }
   };
 
   return (
     <div>
       <div className="flex gap-2">
-        {game && isPlaying ? (
+        {board && isPlaying ? (
           <Button className="cursor-pointer" onClick={() => setResetOpen(true)}>
             Reset Game
           </Button>
@@ -185,9 +209,9 @@ export function GameManager() {
         )}
       </div>
 
-      {game && (
+      {board && (
         <GameCanvas
-          game={game}
+          board={board}
           myColor={myColor}
           activeColor={activeColor}
           upgradePositions={upgradePositions}

@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Board, canOccupyCell, canPlaceRing, getCellAt } from "../engine/board";
 import {
-  BOARD_SIZE,
   Cell,
-  cellFromTypeAndColor,
   CellType,
   Color,
-  Game,
   getCellColor,
+  getCellOf,
   getCellType,
-  Position,
-} from "../engine/game";
+} from "../engine/cell";
+import { Position } from "../engine/position";
 
 const CELL_SIZE = 56;
 const OUTLINE_WIDTH = 2;
@@ -19,10 +18,9 @@ const BUFFER_WIDTH = 6;
 const RING_WIDTH = 6;
 const TOWER_RADIUS = 2;
 const LASER_WIDTH = 2;
-const CANVAS_SIZE = BOARD_SIZE * CELL_SIZE;
 
 export interface GameCanvasProps {
-  game: Game;
+  board: Board;
   myColor: Color;
   activeColor: Color;
   upgradePositions: Position[];
@@ -30,7 +28,7 @@ export interface GameCanvasProps {
 }
 
 export function GameCanvas({
-  game,
+  board,
   myColor,
   activeColor,
   upgradePositions,
@@ -51,7 +49,7 @@ export function GameCanvas({
 
     const renderFrame = () => {
       renderGame(
-        game,
+        board,
         ctx,
         mousePosition,
         upgradePositions,
@@ -73,15 +71,15 @@ export function GameCanvas({
         window.cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [game, mousePosition, upgradePositions, myColor, activeColor]);
+  }, [board, mousePosition, upgradePositions, myColor, activeColor]);
 
   const handleClick = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = CANVAS_SIZE / rect.width;
-    const scaleY = CANVAS_SIZE / rect.height;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
     const newMousePosition = {
       x: (clientX - rect.left) * scaleX,
@@ -117,8 +115,8 @@ export function GameCanvas({
 
     const rect = canvas.getBoundingClientRect();
 
-    const scaleX = CANVAS_SIZE / rect.width;
-    const scaleY = CANVAS_SIZE / rect.height;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
     setMousePosition({
       x: (event.clientX - rect.left) * scaleX,
@@ -129,8 +127,8 @@ export function GameCanvas({
   return (
     <canvas
       ref={canvasRef}
-      width={CANVAS_SIZE}
-      height={CANVAS_SIZE}
+      width={board.settings.size * CELL_SIZE}
+      height={board.settings.size * CELL_SIZE}
       onClick={onClick}
       onTouchStart={onTouchStart}
       onMouseLeave={() => setMousePosition(null)}
@@ -140,17 +138,17 @@ export function GameCanvas({
 }
 
 function renderGame(
-  game: Game,
+  board: Board,
   ctx: CanvasRenderingContext2D,
   mousePosition: Position | null,
   upgradePositions: Position[],
   myColor: Color,
   activeColor: Color,
 ) {
-  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  for (let i = 0; i < BOARD_SIZE; i++) {
-    for (let j = 0; j < BOARD_SIZE; j++) {
+  for (let i = 0; i < board.settings.size; i++) {
+    for (let j = 0; j < board.settings.size; j++) {
       ctx.fillStyle = (i + j) % 2 === 0 ? "#FFF" : "#CCCDB4";
 
       const x = i * CELL_SIZE;
@@ -160,56 +158,70 @@ function renderGame(
     }
   }
 
-  if (game) {
-    for (let i = 0; i < BOARD_SIZE; i++) {
-      for (let j = 0; j < BOARD_SIZE; j++) {
-        const x = i * CELL_SIZE;
-        const y = j * CELL_SIZE;
+  for (let i = 0; i < board.settings.size; i++) {
+    for (let j = 0; j < board.settings.size; j++) {
+      const position = { x: i, y: j };
+      const drawX = i * CELL_SIZE;
+      const drawY = j * CELL_SIZE;
 
-        if (!upgradePositions.length && !isTouchDevice() && mousePosition) {
-          if (
-            mousePosition.x >= x &&
-            mousePosition.x < x + CELL_SIZE &&
-            mousePosition.y >= y &&
-            mousePosition.y < y + CELL_SIZE
-          ) {
-            const valid = activeColor === myColor && game.canPlaceRing(i, j);
+      if (!upgradePositions.length && !isTouchDevice() && mousePosition) {
+        if (
+          mousePosition.x >= drawX &&
+          mousePosition.x < drawX + CELL_SIZE &&
+          mousePosition.y >= drawY &&
+          mousePosition.y < drawY + CELL_SIZE
+        ) {
+          const valid =
+            activeColor === myColor && canPlaceRing(board, position, myColor);
 
-            drawHighlightedCell(ctx, x, y, valid);
+          drawHighlightedCell(ctx, drawX, drawY, valid);
 
-            if (valid) {
-              drawCell(
-                ctx,
-                x,
-                y,
-                cellFromTypeAndColor(CellType.Ring, game.getOurColor()),
-                true,
-              );
-            }
+          if (valid) {
+            drawCell(
+              ctx,
+              drawX,
+              drawY,
+              getCellOf(CellType.Ring, myColor),
+              true,
+            );
+          }
+        }
+      }
+
+      const cell = getCellAt(board, position);
+
+      if (cell !== null) {
+        for (const upgradePosition of upgradePositions) {
+          if (upgradePosition.x === i && upgradePosition.y === j) {
+            drawHighlightedCell(ctx, drawX, drawY, true);
+            break;
           }
         }
 
-        const cell = game.getCell(i, j);
+        drawCell(ctx, drawX, drawY, cell);
 
-        if (cell !== null) {
-          for (const upgradePosition of upgradePositions) {
-            if (upgradePosition.x === i && upgradePosition.y === j) {
-              drawHighlightedCell(ctx, x, y, true);
-              break;
-            }
+        if (cell === Cell.Empty) {
+          let hint = null;
+
+          if (!canOccupyCell(board, position, myColor)) {
+            hint = myColor === Color.Red ? Color.Black : Color.Red;
           }
 
-          drawCell(ctx, x, y, cell);
+          if (
+            !canOccupyCell(
+              board,
+              position,
+              myColor === Color.Red ? Color.Black : Color.Red,
+            )
+          ) {
+            hint = myColor;
+          }
 
-          if (cell === Cell.Empty) {
-            const hint = game.getInvalidityHint(i, j);
-
-            if (hint !== null) {
-              if (hint === myColor) {
-                drawControlHint(ctx, x, y, hint);
-              } else {
-                drawInvalidityHint(ctx, x, y, hint);
-              }
+          if (hint !== null) {
+            if (hint === myColor) {
+              drawControlHint(ctx, drawX, drawY, hint);
+            } else {
+              drawInvalidityHint(ctx, drawX, drawY, hint);
             }
           }
         }
@@ -217,18 +229,18 @@ function renderGame(
     }
   }
 
-  if (game) {
-    for (let i = 0; i < BOARD_SIZE; i++) {
-      for (let j = 0; j < BOARD_SIZE; j++) {
-        const cell = game.getCell(i, j);
+  for (let i = 0; i < board.settings.size; i++) {
+    for (let j = 0; j < board.settings.size; j++) {
+      const position = { x: i, y: j };
 
-        if (cell === null || getCellType(cell) !== CellType.Laser) continue;
+      const cell = getCellAt(board, position);
 
-        const color = getCellColor(cell);
-        if (color === null) continue;
+      if (getCellType(cell) !== CellType.Laser) continue;
 
-        drawLaser(ctx, i * CELL_SIZE, j * CELL_SIZE, color);
-      }
+      const color = getCellColor(cell);
+      if (color === null) continue;
+
+      drawLaser(ctx, i * CELL_SIZE, j * CELL_SIZE, color);
     }
   }
 }
@@ -341,14 +353,14 @@ function drawLaser(
   ctx.fillRect(
     0,
     y + CELL_SIZE / 2 - LASER_WIDTH / 2,
-    CANVAS_SIZE,
+    ctx.canvas.width,
     LASER_WIDTH,
   );
   ctx.fillRect(
     x + CELL_SIZE / 2 - LASER_WIDTH / 2,
     0,
     LASER_WIDTH,
-    CANVAS_SIZE,
+    ctx.canvas.width,
   );
 
   ctx.lineWidth = RING_WIDTH;

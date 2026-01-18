@@ -6,9 +6,7 @@ export default function Home() {
     <div className="flex flex-col items-center p-4 w-[800px] max-w-full mx-auto">
       <h1 className="text-5xl mt-4">Boxen</h1>
 
-      <p className="text-xl mt-2">Game not started yet</p>
-
-      <div className="mt-6">
+      <div className="mt-10">
         <GameManager />
       </div>
 

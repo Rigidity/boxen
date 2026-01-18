@@ -1,29 +1,40 @@
 "use server";
 
 import { v4 as uuidv4 } from "uuid";
-import { Board, Color, Game, oppositeColor } from "./engine/game";
+import { Board, createBoard } from "./engine/board";
+import { Color } from "./engine/cell";
+import { BoardSettings } from "./engine/settings";
 
 interface GameState {
   board: Board;
   activeColor: Color;
-  participantIds: string[];
+  participants: Participant[];
+}
+
+interface Participant {
+  id: string;
+  color: Color;
 }
 
 const games: Record<string, GameState> = {};
 
-export async function startGame(participantId: string): Promise<{
+export async function startGame(
+  participantId: string,
+  settings: BoardSettings,
+  color: Color,
+): Promise<{
   uuid: string;
   board: Board;
   activeColor: Color;
 }> {
   const uuid = uuidv4();
 
-  const game = new Game(Color.Red);
+  const board = createBoard(settings);
 
   const gameState: GameState = {
-    board: game.getBoard(),
+    board,
     activeColor: Color.Red,
-    participantIds: [participantId],
+    participants: [{ id: participantId, color }],
   };
 
   games[uuid] = gameState;
@@ -49,21 +60,26 @@ export async function joinGame(
   const gameState = games[uuid];
   if (!gameState) return { error: "Unknown game" };
 
-  let isParticipant = gameState.participantIds.includes(participantId);
+  let isParticipant = gameState.participants.some(
+    (participant) => participant.id === participantId,
+  );
 
-  if (!isParticipant && gameState.participantIds.length < 2) {
-    gameState.participantIds.push(participantId);
+  if (!isParticipant && gameState.participants.length < 2) {
+    gameState.participants.push({
+      id: participantId,
+      color:
+        gameState.participants[0].color === Color.Red ? Color.Black : Color.Red,
+    });
     isParticipant = true;
   }
 
   return {
     board: gameState.board,
     activeColor: gameState.activeColor,
-    yourColor: isParticipant
-      ? gameState.participantIds.indexOf(participantId) === 0
-        ? Color.Red
-        : Color.Black
-      : null,
+    yourColor:
+      gameState.participants.find(
+        (participant) => participant.id === participantId,
+      )?.color ?? null,
   };
 }
 
@@ -84,11 +100,10 @@ export async function getGameState(
   return {
     board: gameState.board,
     activeColor: gameState.activeColor,
-    yourColor: gameState.participantIds.includes(participantId)
-      ? gameState.participantIds.indexOf(participantId) === 0
-        ? Color.Red
-        : Color.Black
-      : null,
+    yourColor:
+      gameState.participants.find(
+        (participant) => participant.id === participantId,
+      )?.color ?? null,
   };
 }
 
@@ -106,21 +121,31 @@ export async function restartGame(
   const gameState = games[uuid];
   if (!gameState) return { error: "Unknown game" };
 
-  if (!gameState.participantIds.includes(participantId))
+  if (
+    !gameState.participants.some(
+      (participant) => participant.id === participantId,
+    )
+  )
     return { error: "You are not a participant in this game" };
 
-  const game = new Game(Color.Red);
-  gameState.board = game.getBoard();
+  gameState.board = createBoard(gameState.board.settings);
   gameState.activeColor = Color.Red;
-  gameState.participantIds.reverse();
+
+  let color = Color.Red;
+
+  for (const participant of gameState.participants) {
+    participant.color =
+      participant.color === Color.Red ? Color.Black : Color.Red;
+
+    if (participant.id === participantId) {
+      color = participant.color;
+    }
+  }
 
   return {
     board: gameState.board,
     activeColor: gameState.activeColor,
-    yourColor:
-      gameState.participantIds.indexOf(participantId) === 0
-        ? Color.Red
-        : Color.Black,
+    yourColor: color,
   };
 }
 
@@ -137,17 +162,18 @@ export async function updateGame(
   const gameState = games[uuid];
   if (!gameState) return { error: "Unknown game" };
 
-  if (!gameState.participantIds.includes(participantId))
-    return { error: "You are not a participant in this game" };
+  const participant = gameState.participants.find(
+    (participant) => participant.id === participantId,
+  );
 
-  const myColor =
-    gameState.participantIds.indexOf(participantId) === 0
-      ? Color.Red
-      : Color.Black;
-  if (myColor !== gameState.activeColor) return { error: "It's not your turn" };
+  if (!participant) return { error: "You are not a participant in this game" };
+
+  if (gameState.activeColor !== participant.color)
+    return { error: "It's not your turn" };
 
   gameState.board = board;
-  gameState.activeColor = oppositeColor(myColor);
+  gameState.activeColor =
+    participant.color === Color.Red ? Color.Black : Color.Red;
 
   return {
     activeColor: gameState.activeColor,
