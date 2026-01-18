@@ -127,6 +127,7 @@ export function GameCanvas({
   return (
     <canvas
       ref={canvasRef}
+      className="max-w-full"
       width={board.settings.size * CELL_SIZE}
       height={board.settings.size * CELL_SIZE}
       onClick={onClick}

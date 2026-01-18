@@ -70,7 +70,7 @@ export function GameManager() {
 
   const [startOpen, setStartOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
-  const [closeOpen, setCloseOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const uuid = useMemo(() => searchParams.get("uuid"), [searchParams]);
 
@@ -250,8 +250,8 @@ export function GameManager() {
     }
   };
 
-  const closeGame = async () => {
-    setCloseOpen(false);
+  const leaveGame = async () => {
+    setLeaveOpen(false);
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("uuid");
@@ -278,9 +278,9 @@ export function GameManager() {
             </Button>
             <Button
               className="cursor-pointer"
-              onClick={() => setCloseOpen(true)}
+              onClick={() => setLeaveOpen(true)}
             >
-              Close Game
+              Leave Game
             </Button>
           </>
         ) : (
@@ -450,17 +450,17 @@ export function GameManager() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
+      <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to close the game?</DialogTitle>
+            <DialogTitle>Are you sure you want to leave the game?</DialogTitle>
             <DialogDescription>
               You can return to it later by entering the same game URL.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="destructive" onClick={() => closeGame()}>
-              Close
+            <Button variant="destructive" onClick={() => leaveGame()}>
+              Leave
             </Button>
           </DialogFooter>
         </DialogContent>
