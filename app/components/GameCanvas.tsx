@@ -54,7 +54,7 @@ export function GameCanvas({
         mousePosition,
         upgradePositions,
         myColor,
-        activeColor,
+        activeColor
       );
 
       if (isMounted) {
@@ -101,14 +101,6 @@ export function GameCanvas({
     handleClick(event.clientX, event.clientY);
   };
 
-  const onTouchStart = (event: React.TouchEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
-    if (event.touches.length === 1) {
-      const touch = event.touches[0];
-      handleClick(touch.clientX, touch.clientY);
-    }
-  };
-
   const onMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -131,7 +123,6 @@ export function GameCanvas({
       width={board.settings.size * CELL_SIZE}
       height={board.settings.size * CELL_SIZE}
       onClick={onClick}
-      onTouchStart={onTouchStart}
       onMouseLeave={() => setMousePosition(null)}
       onMouseMove={onMouseMove}
     />
@@ -144,7 +135,7 @@ function renderGame(
   mousePosition: Position | null,
   upgradePositions: Position[],
   myColor: Color,
-  activeColor: Color,
+  activeColor: Color
 ) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -183,7 +174,7 @@ function renderGame(
               drawX,
               drawY,
               getCellOf(CellType.Ring, myColor),
-              true,
+              true
             );
           }
         }
@@ -211,7 +202,7 @@ function renderGame(
           !canOccupyCell(
             board,
             position,
-            myColor === Color.Red ? Color.Black : Color.Red,
+            myColor === Color.Red ? Color.Black : Color.Red
           )
         ) {
           hint = myColor;
@@ -248,7 +239,7 @@ function drawHighlightedCell(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  valid: boolean,
+  valid: boolean
 ) {
   if (!valid) {
     ctx.fillStyle = "#FF9999";
@@ -261,7 +252,7 @@ function drawHighlightedCell(
     x + ctx.lineWidth / 2,
     y + ctx.lineWidth / 2,
     CELL_SIZE - ctx.lineWidth,
-    CELL_SIZE - ctx.lineWidth,
+    CELL_SIZE - ctx.lineWidth
   );
 }
 
@@ -269,7 +260,7 @@ function drawInvalidityHint(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  color: Color,
+  color: Color
 ) {
   ctx.strokeStyle = getColorString(color, true);
   ctx.lineWidth = 8;
@@ -287,7 +278,7 @@ function drawControlHint(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  color: Color,
+  color: Color
 ) {
   ctx.fillStyle = getColorString(color, true);
   ctx.beginPath();
@@ -302,7 +293,7 @@ function drawCell(
   x: number,
   y: number,
   cell: Cell,
-  partiallyTransparent: boolean = false,
+  partiallyTransparent: boolean = false
 ) {
   const type = getCellType(cell);
   const color = getCellColor(cell);
@@ -324,7 +315,7 @@ function drawCell(
         y + CELL_SIZE / 2,
         CELL_SIZE / 2 - ctx.lineWidth / 2 - BUFFER_WIDTH,
         0,
-        2 * Math.PI,
+        2 * Math.PI
       );
       ctx.stroke();
       ctx.closePath();
@@ -338,7 +329,7 @@ function drawCell(
         y + BUFFER_WIDTH,
         CELL_SIZE - BUFFER_WIDTH * 2,
         CELL_SIZE - BUFFER_WIDTH * 2,
-        TOWER_RADIUS,
+        TOWER_RADIUS
       );
       ctx.fill();
       ctx.closePath();
@@ -350,20 +341,20 @@ function drawLaser(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  color: Color,
+  color: Color
 ) {
   ctx.fillStyle = getColorString(color, true);
   ctx.fillRect(
     0,
     y + CELL_SIZE / 2 - LASER_WIDTH / 2,
     ctx.canvas.width,
-    LASER_WIDTH,
+    LASER_WIDTH
   );
   ctx.fillRect(
     x + CELL_SIZE / 2 - LASER_WIDTH / 2,
     0,
     LASER_WIDTH,
-    ctx.canvas.width,
+    ctx.canvas.width
   );
 
   ctx.lineWidth = RING_WIDTH;
@@ -374,7 +365,7 @@ function drawLaser(
     y + CELL_SIZE / 2,
     CELL_SIZE / 2 - ctx.lineWidth / 2 - BUFFER_WIDTH,
     0,
-    2 * Math.PI,
+    2 * Math.PI
   );
   ctx.fill();
   ctx.closePath();
